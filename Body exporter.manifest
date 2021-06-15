@@ -1,0 +1,10 @@
+{
+	"autodeskProduct":	"Fusion360",
+	"type":	"script",
+	"author":	"Andrew Van Dam",
+	"description":	{
+		"":	"Bulk exports all bodies in an assembly "
+	},
+	"supportedOS":	"windows",
+	"editEnabled":	true
+}
