@@ -18,6 +18,8 @@ class Ctx(NamedTuple):
     rename_default_bodies: bool
     set_bodies_to_component_name: bool
     do_not_overwrite_outputs: bool
+    ignore_hidden_bodies: bool
+    ignore_hidden_components: bool
 
     def extend(self, other):
         return self._replace(folder=self.folder / other)
@@ -127,30 +129,30 @@ class ExporterCommandExecuteHandler(adsk.core.CommandEventHandler):
     Command execution handler, instantiated by dialog when "ok" is selected
     '''
     def notify(self, args):
-   #     try:
-        inputs = args.command.commandInputs
+        try:
+            inputs = args.command.commandInputs
 
-        app = adsk.core.Application.get()
-        ui = app.userInterface
+            app = adsk.core.Application.get()
+            ui = app.userInterface
 
-        ctx = Ctx(
-            app = app,
-            folder = inputs.itemById('directory').value,
-            prefix= inputs.itemById('prefix').value,
-            suffix= inputs.itemById('suffix').value,
-            rename_default_bodies = inputs.itemById('rename_bodies').value,
-            do_not_overwrite_outputs = not inputs.itemById('overwrite_outputs').value,
-            set_bodies_to_component_name = inputs.itemById('component_level_naming').value,
-            ignore_hidden_bodies = inputs.itemById('ignore_hidden_bodies').value,
-            ignore_hidden_compoents = inputs.itemById('ignore_hidden_compoents').value,
-        )
+            ctx = Ctx(
+                app = app,
+                folder = inputs.itemById('directory').value,
+                prefix= inputs.itemById('prefix').value,
+                suffix= inputs.itemById('suffix').value,
+                rename_default_bodies = inputs.itemById('rename_bodies').value,
+                do_not_overwrite_outputs = not inputs.itemById('overwrite_outputs').value,
+                set_bodies_to_component_name = inputs.itemById('component_level_naming').value,
+                ignore_hidden_bodies = inputs.itemById('ignore_hidden_bodies').value,
+                ignore_hidden_components = inputs.itemById('ignore_hidden_components').value,
+            )
 
-        export_job(ctx)
+            export_job(ctx)
 
-        ui.messageBox("Lets just assume it worked")
+            ui.messageBox("Lets just assume it worked")
 
-       # except:
-       #     tb = traceback.format_exc()
+        except:
+            tb = traceback.format_exc()
 
 
 #region UI Elements
@@ -185,7 +187,8 @@ class ExporterCommandCreatedEventHandler(adsk.core.CommandCreatedEventHandler):
             inputs.addBoolValueInput('component_level_naming', 'Set name at component level?', True, '', False)
             inputs.addBoolValueInput('overwrite_outputs', 'Overwrite existing outputs?', True, '', True)
             inputs.addBoolValueInput('ignore_hidden_bodies', 'Ignore hidden bodies?', True, '', True)
-            inputs.addBoolValueInput('ignore_hidden_compoents', 'Ignore hidden components?', True, '', True)
+            inputs.addBoolValueInput('ignore_hidden_components', 'Ignore hidden components?', True, '', True)
+
         except:
             adsk.core.Application.get().userInterface.messageBox(traceback.format_exc())
 
