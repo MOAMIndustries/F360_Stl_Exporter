@@ -9,6 +9,8 @@ import os
 handlers = []
 
 class Ctx(NamedTuple):
+    ''' Context manager. Passed between functions to provide paramaters
+    '''
     folder: str
     app: adsk.core.Application
     prefix: str
@@ -41,11 +43,14 @@ class Ctx(NamedTuple):
 
 
 def export_job(ctx: Ctx):
-    # identify visible bodies
+    '''
+    Processes the export job based on settings input in the dialog box
+    '''
     ctx.create_folder()
 
     exportMgr = ctx.design.exportManager
 
+    # Process any bodies At the root level
     process_bodies(
         ctx, 
         ctx.root_component.bRepBodies,
@@ -53,6 +58,7 @@ def export_job(ctx: Ctx):
         exportMgr
         )
     
+    # Process bodies within components
     process_components(
         ctx, 
         ctx.root_component.occurrences,
@@ -62,6 +68,10 @@ def export_job(ctx: Ctx):
     print("hello")
 
 def process_components(ctx, components, exportManager):
+    '''
+    Itterate through each component in the active design and process
+    any bodies that need to be exported
+    '''
     for component in components:
         if not component.isLightBulbOn and ctx.ignore_hidden_components:
             continue
@@ -70,24 +80,30 @@ def process_components(ctx, components, exportManager):
         process_bodies(ctx, component.bRepBodies, component_name, exportManager)
 
 def process_bodies(ctx, bodies, parent_name, exportManager):
+    '''
+    Itterate through each body withing the corrent occurence (Fusions object name for component)
+    Exporting files as STLs based on parameters stored in the context object ctx
+    '''
     body_count = 0
     for body in bodies:
         body_count += 1
         
+
         if not body.isLightBulbOn and ctx.ignore_hidden_bodies:
+            # Skip this body
             continue
 
         body_name = body.name
         
         # Check if name is default
-        
         if re.match(r'Body\d+$',body_name):
-            if len(bodies) == 1:
-                body_name = parent_name
-            else:
-                body_name= f"{parent_name}_{body_count}"
+            if ctx.rename_default_bodies:
+                if len(bodies) == 1:
+                    body_name = parent_name
+                else:
+                    body_name= f"{parent_name}_{body_count}"
         
-        # There is a risk of overwrite here if there is duplicated components
+        # There is a risk of overwrite here if there is duplicated component names
         if ctx.set_bodies_to_component_name:
             if len(bodies) == 1:
                 body_name = parent_name[:-2]
@@ -106,10 +122,10 @@ def process_bodies(ctx, bodies, parent_name, exportManager):
         exportManager.execute(export_job)
 
 
-
-
-
 class ExporterCommandExecuteHandler(adsk.core.CommandEventHandler):
+    '''
+    Command execution handler, instantiated by dialog when "ok" is selected
+    '''
     def notify(self, args):
    #     try:
         inputs = args.command.commandInputs
